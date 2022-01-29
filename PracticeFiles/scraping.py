@@ -1,5 +1,4 @@
 # Import Splinter, BeautifulSoup, and Pandas
-from turtle import back
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 import pandas as pd
@@ -13,7 +12,6 @@ def scrape_all():
     browser = Browser('chrome', **executable_path, headless=True)
 
     news_title, news_paragraph = mars_news(browser)
-    hemisphere_image_urls = hemispheres(browser)
 
     # Run all scraping functions and store results in a dictionary
     data = {
@@ -21,7 +19,6 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "hemispheres": hemisphere_image_urls,
         "last_modified": dt.datetime.now()
     }
 
@@ -85,57 +82,29 @@ def featured_image(browser):
     return img_url
 
 def mars_facts():
+    # Add try/except for error handling
     try:
-        # df = pd.read_html('http://space-facts.com/mars/')[0]
+        # Use 'read_html' to scrape the facts table into a dataframe
+        # df = pd.read_html('https://data-class-mars-facts.s3.amazonaws.com/Mars_Facts/index.html')[0]
         df = pd.read_html('https://galaxyfacts-mars.com')[0]
+        
     except BaseException:
         return None
 
-    df.columns=['Description', 'Mars']
-    # df.columns = ['Description', 'Mars', 'Earth']
-    df.set_index('Description', inplace=True)
+    # df.columns=["Description", "Value"]
+    df.columns=['description', 'Mars', 'Earth']
+    df.set_index("Description", inplace=True)
 
-    return df.to_html(classes='table table-striped')
+    return df.to_html(classes="table table-striped")
 
+    # Assign columns and set index of dataframe
+    # df.columns=['Description', 'Mars', 'Earth']
+    # df.set_index('Description', inplace=True)
+
+    # Convert dataframe into HTML format, add bootstrap
+    # return df.to_html(classes="table table-striped")
 
 if __name__ == "__main__":
 
+    # If running as script, print scraped data
     print(scrape_all())
-
-def hemispheres(browser):
-    url = 'https://marshemispheres.com/'
-    browser.visit(url)
-    
-    hemisphere_image_urls = []
-
-    html = browser.html
-    img_soup = soup(html, 'html.parser')
-    items = img_soup.find_all('div', class_='item')
-
-    for i in items:
-        hemisphere_dict = {}
-        title = i.find('h3').text
-        links = i.find('a', class_='itemLink product-item')['href']
-        
-        link_url = (url + links)
-        browser.visit(link_url)
-        img_link = browser.links.find_by_text('Sample').first
-        img_url = img_link['href']
-
-        hemisphere_dict['img_url'] = img_url
-        hemisphere_dict['title'] = title
-        
-        # print(title)
-        # print(img_url
-
-        hemisphere_image_urls.append(hemisphere_dict)
-        
-        browser.back
-
-    return hemisphere_image_urls
-
-
-# if __name__ == "__main__":
-
-#     # If running as script, print scraped data
-#     print(scrape_all())
